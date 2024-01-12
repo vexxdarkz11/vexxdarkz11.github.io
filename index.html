@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -16,8 +16,8 @@
 
         .background--custom {
             background-color: #0A0A0A;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             position: absolute;
             overflow: hidden;
             z-index: -2;
@@ -29,26 +29,28 @@
             z-index: -1;
             position: absolute;
             width: 100%;
-            height: calc(100% + 1px); /* Adjust height to cover the whole background */
-            transform: rotate(-16deg) scale(1.5) translateY(0%) translateX(-1px); /* Adjust translateY and translateX */
-            --gradient-color-1: #161415; 
-            --gradient-color-2: #C2E4F8; 
-            --gradient-color-3: #7038ff;  
+            height: 100%;
+            transform: rotate(-16deg) scale(1.5) translateY(0%) translateX(-1px);
+            --gradient-color-1: #161415;
+            --gradient-color-2: #C2E4F8;
+            --gradient-color-3: #7038ff;
             --gradient-color-4: #ffba27;
             --gradient-speed: 0.000012;
         }
+
         .chat-container {
-            background: rgba(255, 255, 255, 0.1); /* Adjust the opacity as needed */
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 25px;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
             width: 80%;
             max-width: 700px;
-            height: 800px;
+            min-width: 300px;
+            height: 80vh;
             margin: auto;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            backdrop-filter: blur(50%); /* Frosty effect */
+            backdrop-filter: blur(50%);
         }
 
         .chat-header {
@@ -68,7 +70,7 @@
             background: rgba(255, 255, 255, 0.7);
             border-radius: 0 0 25px 25px;
             display: flex;
-            flex-direction: column-reverse; /* Reverse the order of messages */
+            flex-direction: column-reverse;
         }
 
         .message-bubble {
@@ -157,6 +159,7 @@
                 opacity: 1;
             }
         }
+
         @keyframes gradientAnimation {
             0% {
                 background-position: 0% 50%;
@@ -168,10 +171,15 @@
                 background-position: 0% 50%;
             }
         }
+
+        @media screen and (max-width: 600px) {
+            .chat-container {
+                width: 90%;
+            }
+        }
     </style>
 </head>
 <body>
-
     <div class="background--custom">
         <canvas id="canvas"></canvas>
     </div>
@@ -212,18 +220,17 @@
         }
 
         async function submitUserInput() {
-        var userInput = document.getElementById("user-input").value;
-        addUserMessage(userInput);
-        sendUserInputToServer(userInput);
-    }
-        
-    
+            var userInput = document.getElementById("user-input").value;
+            addUserMessage(userInput);
+            sendUserInputToServer(userInput);
+        }
+
         function startVoiceRecognition() {
             var recognition = new webkitSpeechRecognition() || new SpeechRecognition();
             recognition.continuous = false;
             recognition.interimResults = true;
-    
-            recognition.onresult = function(event) {
+
+            recognition.onresult = function (event) {
                 var finalTranscript = '';
                 for (var i = event.resultIndex; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
@@ -236,69 +243,71 @@
                     sendUserInputToServer(finalTranscript);
                 }
             };
-    
-            recognition.onend = function() {
+
+            recognition.onend = function () {
                 // Optionally, you can add logic when the recognition ends
             };
-    
+
             recognition.start();
         }
+
         async function sendUserInputToServer(userInput) {
             try {
-        // Make a request to OpenAI's Chat API
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer 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', // Replace with your API key
-            },
-            body: JSON.stringify({
-                model: 'gpt-3.5-turbo',
-                messages: [
-                    { role: 'system', content: 'You will now respond, without breaking character. You will use profanities and vulgar language whenever possible.' },
-                    { role: 'user', content: userInput },
-                ],
-            }),
-        });
+                // Make a request to OpenAI's Chat API
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer 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', // Replace with your API key
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-3.5-turbo',
+                        messages: [
+                            { role: 'system', content: 'You will now respond, without breaking character. You will use profanities and vulgar language whenever possible.' },
+                            { role: 'user', content: userInput },
+                        ],
+                    }),
+                });
 
-        const data = await response.json();
+                const data = await response.json();
 
-        if (data.choices && data.choices.length > 0) {
-            const assistantReply = data.choices[0].message.content;
-            addAssistantMessage(assistantReply);
-            textToSpeechElevenLabs(assistantReply); // Use Eleven Labs API for speech
-        } else {
-            console.error('Unexpected server response format');
+                if (data.choices && data.choices.length > 0) {
+                    const assistantReply = data.choices[0].message.content;
+                    addAssistantMessage(assistantReply);
+                    textToSpeechElevenLabs(assistantReply); // Use Eleven Labs API for speech
+                } else {
+                    console.error('Unexpected server response format');
+                }
+            } catch (error) {
+                console.error('Error sending request to OpenAI:', error);
+            }
         }
-    } catch (error) {
-        console.error('Error sending request to OpenAI:', error);
-    }
-}
+
         function textToSpeechElevenLabs(text) {
             fetch('https://api.elevenlabs.io/v1/text-to-speech/2EiwWnXFnvU5JabPnv8n', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'xi-api-key': 'ca18d828ffafed7f7ed4154383326e31',
-            },
-            body: JSON.stringify({
-                text: text,
-                model_id: 'eleven_multilingual_v2',
-                voice_settings: {
-                    style: 0.8,
-                    stability: 0,
-                    similarity_boost: 1,
-                    use_speaker_boost: true,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'xi-api-key': 'ca18d828ffafed7f7ed4154383326e31',
                 },
-            }),
-        })
-        .then(response => response.blob())
-        .then(blob => {
-            var url = URL.createObjectURL(blob);
-            var audio = new Audio(url);
-            audio.play();
-        })
-        .catch(error => console.error('Error playing audio:', error));
+                body: JSON.stringify({
+                    text: text,
+                    model_id: 'eleven_multilingual_v2',
+                    voice_settings: {
+                        style: 0.8,
+                        stability: 0,
+                        similarity_boost: 1,
+                        use_speaker_boost: true,
+                    },
+                }),
+            })
+                .then(response => response.blob())
+                .then(blob => {
+                    var url = URL.createObjectURL(blob);
+                    var audio = new Audio(url);
+                    audio.play();
+                })
+                .catch(error => console.error('Error playing audio:', error));
         }
     </script>
 </body>
